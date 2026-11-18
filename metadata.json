@@ -1,0 +1,6 @@
+{
+  "name": "Distributed Task Scheduling System",
+  "description": "A beginner-friendly full stack college course project for distributed task scheduling and team member assignment built with HTML5, CSS3, Vanilla JavaScript, Express, and MySQL.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

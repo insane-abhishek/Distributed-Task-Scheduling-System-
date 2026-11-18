@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Distributed Task Scheduling System</title>
+  <meta name="description" content="A beginner-friendly full stack college course project for distributed task scheduling and team member assignment built with HTML5, CSS3, Vanilla JavaScript, Express, and MySQL.">
+  <meta property="og:title" content="Distributed Task Scheduling System">
+  <meta property="og:description" content="A beginner-friendly full stack college course project for distributed task scheduling and team member assignment built with HTML5, CSS3, Vanilla JavaScript, Express, and MySQL.">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- Top Header / Banner -->
+  <header class="header">
+    <div class="header-content">
+      <div class="logo-area">
+        <h1>Distributed Task Scheduling System</h1>
+        <p class="subtitle">Full Stack Development Course Project &bull; Team Task Distribution</p>
+      </div>
+      <div class="db-status-badge">
+        <span class="status-indicator"></span>
+        <span id="db-status-text">System Active (MySQL API)</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <button class="nav-btn active" id="tab-dashboard" onclick="switchPage('dashboard')">
+        Dashboard
+      </button>
+      <button class="nav-btn" id="tab-tasks" onclick="switchPage('tasks')">
+        Manage Tasks
+      </button>
+      <button class="nav-btn" id="tab-members" onclick="switchPage('members')">
+        Team Members
+      </button>
+    </div>
+  </nav>
+
+  <!-- Notification Banner for User Feedback -->
+  <div id="notification-banner" class="notification-banner"></div>
+
+  <!-- Main Container -->
+  <main class="main-container">
+
+    <!-- ============================================== -->
+    <!-- PAGE 1: DASHBOARD -->
+    <!-- ============================================== -->
+    <section id="dashboard-page" class="page-section active">
+      <div class="page-header">
+        <h2>System Dashboard</h2>
+        <p>Real-time statistics of distributed tasks across team members.</p>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card total-card">
+          <div class="stat-info">
+            <span class="stat-label">Total Tasks</span>
+            <span class="stat-value" id="stat-total">0</span>
+          </div>
+          <div class="stat-desc">Scheduled in system</div>
+        </div>
+
+        <div class="stat-card pending-card">
+          <div class="stat-info">
+            <span class="stat-label">Pending Tasks</span>
+            <span class="stat-value" id="stat-pending">0</span>
+          </div>
+          <div class="stat-desc">Awaiting execution</div>
+        </div>
+
+        <div class="stat-card progress-card">
+          <div class="stat-info">
+            <span class="stat-label">In Progress</span>
+            <span class="stat-value" id="stat-progress">0</span>
+          </div>
+          <div class="stat-desc">Currently being handled</div>
+        </div>
+
+        <div class="stat-card completed-card">
+          <div class="stat-info">
+            <span class="stat-label">Completed Tasks</span>
+            <span class="stat-value" id="stat-completed">0</span>
+          </div>
+          <div class="stat-desc">Successfully finished</div>
+        </div>
+      </div>
+
+      <!-- Dashboard Quick Actions & Summary -->
+      <div class="dashboard-split">
+        <div class="content-box recent-tasks-box">
+          <div class="box-header">
+            <h3>Recently Scheduled Tasks</h3>
+            <button class="btn btn-secondary btn-sm" onclick="switchPage('tasks')">View All Tasks &rarr;</button>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Task Title</th>
+                  <th>Assigned To</th>
+                  <th>Priority</th>
+                  <th>Deadline</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recent-tasks-tbody">
+                <tr><td colspan="6" class="text-center">Loading tasks...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Team Workload Distribution Preview -->
+        <div class="content-box workload-box">
+          <div class="box-header">
+            <h3>Workload Distribution</h3>
+            <button class="btn btn-secondary btn-sm" onclick="switchPage('members')">Manage Team &rarr;</button>
+          </div>
+          <div id="workload-list" class="workload-list">
+            <p class="text-center">Loading team members...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Teamwork Recommendation Box -->
+      <div class="content-box ai-insights-box">
+        <div class="box-header">
+          <h3>AI Teamwork &amp; Workload Recommendation</h3>
+          <button type="button" class="btn btn-ai btn-sm" id="btn-ai-insights" onclick="loadAiTeamInsights()">
+            Analyze Team Workload (AI)
+          </button>
+        </div>
+        <div id="ai-insights-content" class="ai-insights-content">
+          <p class="ai-placeholder-text">Click <strong>Analyze Team Workload (AI)</strong> to get AI-powered recommendations on how to distribute tasks effectively across your team.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- PAGE 2: MANAGE TASKS -->
+    <!-- ============================================== -->
+    <section id="tasks-page" class="page-section">
+      <div class="page-header">
+        <h2>Manage Tasks</h2>
+        <p>Schedule new distributed tasks, assign them to members, and update progress.</p>
+      </div>
+
+      <!-- Add New Task Form -->
+      <div class="content-box form-box">
+        <div class="box-header">
+          <h3>Schedule New Task</h3>
+        </div>
+        <form id="create-task-form" onsubmit="handleCreateTask(event)">
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label for="task-title">Task Title <span class="required">*</span></label>
+              <input type="text" id="task-title" name="title" placeholder="e.g. Implement Distributed Queue Worker" required>
+            </div>
+
+            <div class="form-group">
+              <div class="label-with-action">
+                <label for="task-assigned">Assign Team Member</label>
+                <button type="button" class="btn-ai-inline" id="btn-ai-suggest" onclick="suggestAssigneeForNewTask()">
+                  AI Suggest
+                </button>
+              </div>
+              <select id="task-assigned" name="assigned_to">
+                <option value="">-- Select Member --</option>
+              </select>
+              <div id="new-task-ai-reason" class="ai-reason-hint"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="task-priority">Priority</label>
+              <select id="task-priority" name="priority">
+                <option value="Low">Low</option>
+                <option value="Medium" selected>Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="task-deadline">Deadline</label>
+              <input type="date" id="task-deadline" name="deadline">
+            </div>
+
+            <div class="form-group">
+              <label for="task-status">Initial Status</label>
+              <select id="task-status" name="status">
+                <option value="Pending" selected>Pending</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Completed">Completed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="btn-save-task">Schedule Task</button>
+            <button type="reset" class="btn btn-secondary">Clear Form</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Task List Table Section -->
+      <div class="content-box table-box">
+        <div class="box-header flex-between">
+          <h3>All Scheduled Tasks</h3>
+          <div class="table-filters">
+            <button type="button" class="btn btn-ai btn-sm" id="btn-recommend-all" onclick="recommendAllTasks()">
+              AI Recommend All
+            </button>
+            <input type="text" id="task-search-input" placeholder="Search tasks..." oninput="filterTasks()">
+            <select id="task-filter-status" onchange="filterTasks()">
+              <option value="ALL">All Statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+            <select id="task-filter-priority" onchange="filterTasks()">
+              <option value="ALL">All Priorities</option>
+              <option value="High">High</option>
+              <option value="Medium">Medium</option>
+              <option value="Low">Low</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 55px;">ID</th>
+                <th>Task Title</th>
+                <th>Assigned To</th>
+                <th>Priority</th>
+                <th>Deadline</th>
+                <th>Status (Quick Update)</th>
+                <th style="min-width: 210px;">AI Recommendation</th>
+                <th style="width: 130px;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="all-tasks-tbody">
+              <tr><td colspan="8" class="text-center">Loading tasks...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- PAGE 3: TEAM MEMBERS -->
+    <!-- ============================================== -->
+    <section id="members-page" class="page-section">
+      <div class="page-header">
+        <h2>Team Members</h2>
+        <p>View registered team members and monitor how tasks are distributed.</p>
+      </div>
+
+      <!-- Add New Member Form -->
+      <div class="content-box form-box">
+        <div class="box-header">
+          <h3>Add New Team Member</h3>
+        </div>
+        <form id="create-member-form" onsubmit="handleCreateMember(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="member-name">Full Name <span class="required">*</span></label>
+              <input type="text" id="member-name" name="name" placeholder="e.g. Abhishek Raj" required>
+            </div>
+            <div class="form-group">
+              <label for="member-email">Email Address <span class="required">*</span></label>
+              <input type="email" id="member-email" name="email" placeholder="e.g. abhishek.raj@example.edu" required>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="btn-add-member">Add Team Member</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Team Members Table -->
+      <div class="content-box table-box">
+        <div class="box-header">
+          <h3>Team Members &amp; Task Allocation</h3>
+        </div>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Member ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Assigned Tasks</th>
+                <th>Workload Status</th>
+              </tr>
+            </thead>
+            <tbody id="members-tbody">
+              <tr><td colspan="5" class="text-center">Loading members...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============================================== -->
+  <!-- EDIT TASK MODAL DIALOG -->
+  <!-- ============================================== -->
+  <div id="edit-modal" class="modal-overlay">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Edit Task Details</h3>
+        <button type="button" class="close-btn" onclick="closeEditModal()">&times;</button>
+      </div>
+      <form id="edit-task-form" onsubmit="handleUpdateTask(event)">
+        <input type="hidden" id="edit-task-id">
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="edit-task-title">Task Title <span class="required">*</span></label>
+            <input type="text" id="edit-task-title" required>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-task-assigned">Assign Team Member</label>
+            <select id="edit-task-assigned">
+              <option value="">-- Unassigned --</option>
+            </select>
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label for="edit-task-priority">Priority</label>
+              <select id="edit-task-priority">
+                <option value="Low">Low</option>
+                <option value="Medium">Medium</option>
+                <option value="High">High</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="edit-task-deadline">Deadline</label>
+              <input type="date" id="edit-task-deadline">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="edit-task-status">Status</label>
+            <select id="edit-task-status">
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-content">
+      <p>Distributed Task Scheduling System &bull; Full Stack Development Project Reference</p>
+      <p class="footer-tech">Technologies: HTML5, CSS3, Vanilla JavaScript, Node.js, Express.js, MySQL</p>
+    </div>
+  </footer>
+
+  <!-- Application Script -->
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
